@@ -1,6 +1,5 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-advanced-reader.ss" "lang")((modname tetris) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f ())))
+#lang racket
+
 ;;http://tetris.wikia.com/wiki/Tetris_Guideline
 (require htdp/draw)
 
@@ -10,7 +9,7 @@
 (define largura 250)
 (define altura 550)
 
-(start largura altura)
+;;(start largura altura)
 
 ;;square é cada quadrado da tela, definido pelo tipo ("void", "solid" ou "mobile") e cor (I - DeepSkyBlue, O - Gold, T - Purple, S - Green, Z - Red, J - DarkOrange, L - Blue, void - White)
 ;;a tela será uma lista de listas de squares
@@ -20,7 +19,7 @@
 (define-struct block (type xc yc orient))
 
 ;;canvas-block é um conjunto de 4 coordenadas de quadrados a serem colocados na tela, e seu tipo)
-(define-struck canvas-block (type x1 y1 x2 y2 x3 y3 x4 y4))
+(define-struct canvas-block (type x1 y1 x2 y2 x3 y3 x4 y4))
 
 ;;exemplo de tela fictícia
 (define ex-tela (list
@@ -63,8 +62,8 @@
 ;;COM PROBLEMAS -> Racket está reclamando de não existir remove* (????)
 ;;delete-full-lines: tela -> tela
 ;;retorna a tela sem as linhas preenchidas
-;;(define (delete-full-lines t)
-;;  (remove* full-line t (lambda (l1 l2) (and (full-line? l1) (full-line? l2)))))
+(define (delete-full-lines t)
+  (remove* full-line t (lambda (l1 l2) (and (full-line? l1) (full-line? l2)))))
 
 ;;append-void-lines: tela inteiro -> tela
 ;;retorna a tela com um número de linhas vazias adicionado acima
@@ -101,6 +100,7 @@
 
 ;;convert-block: block -> canvas
 ;;converte um bloco para colocar no canvas
+;;http://i.stack.imgur.com/JLRFu.png (primeira coluna (da esquerda para a direita) = 'north, segunda = 'east, terceira = 'south, quarta = 'west)
 (define (convert-block b)
   (cond 
     [(eq? (block-type b) 'O) (make-canvas-block (block-type b)
@@ -127,7 +127,8 @@
                                [(eq? (block-orient b) 'west) (make-canvas-block (block-type b)
                                                                                 (- (block-xc b) 1) (+ (block-yc b) 2)
                                                                                 (- (block-xc b) 1) (+ (block-yc b) 1)
-                                                                                (- (block-xc b) 1) (block-yc b))])]
+                                                                                (- (block-xc b) 1) (block-yc b)
+                                                                                (- (block-xc b) 1) (- (block-yc b) 1))])]
     [(eq? (block-type b) 'T) (cond
                                [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
@@ -144,7 +145,7 @@
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (- (block-yc b) 1)
                                                                                  (+ (block-xc b) 1) (block-yc b))]
-                               [(eq? (block-orient b) 'east) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'west) (make-canvas-block (block-type b)
                                                                                 (block-xc b) (+ (block-yc b) 1)
                                                                                 (block-xc b) (block-yc b)
                                                                                 (- (block-xc b) 1) (block-yc b)
@@ -165,7 +166,7 @@
                                                                                  (block-xc b) (block-yc b)
                                                                                  (+ (block-xc b) 1) (- (block-yc b) 1)
                                                                                  (+ (block-xc b) 1) (block-yc b))]
-                               [(eq? (block-orient b) 'east) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'west) (make-canvas-block (block-type b)
                                                                                 (block-xc b) (+ (block-yc b) 1)
                                                                                 (block-xc b) (block-yc b)
                                                                                 (- (block-xc b) 1) (- (block-yc b) 1)
@@ -186,12 +187,50 @@
                                                                                  (block-xc b) (block-yc b)
                                                                                  (- (block-xc b) 1) (- (block-yc b) 1)
                                                                                  (+ (block-xc b) 1) (block-yc b))]
-                               [(eq? (block-orient b) 'east) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'west) (make-canvas-block (block-type b)
                                                                                 (block-xc b) (+ (block-yc b) 1)
                                                                                 (block-xc b) (block-yc b)
                                                                                 (- (block-xc b) 1) (+ (block-yc b) 1)
                                                                                 (block-xc b) (- (block-yc b) 1))])]
-    ;;falta S e Z
-    ))
-
-
+     [(eq? (block-type b) 'S) (cond
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                                                                                 (- (block-xc b) 1) (+ (block-yc b) 1)
+                                                                                 (block-xc b) (block-yc b)
+                                                                                 (block-xc b) (+ (block-yc b) 1)
+                                                                                 (+ (block-xc b) 1) (block-yc b))]
+                               [(eq? (block-orient b) 'east) (make-canvas-block (block-type b)
+                                                                                (+ (block-xc b) 1) (+ (block-yc b) 1)
+                                                                                (block-xc b) (block-yc b)
+                                                                                (+ (block-xc b) 1) (block-yc b)
+                                                                                (block-xc b) (- (block-yc b) 1))]
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                                                                                 (- (block-xc b) 1) (block-yc b)
+                                                                                 (block-xc b) (block-yc b)
+                                                                                 (block-xc b) (- (block-yc b) 1)
+                                                                                 (+ (block-xc b) 1) (- (block-yc b) 1))]
+                               [(eq? (block-orient b) 'west) (make-canvas-block (block-type b)
+                                                                                (block-xc b) (+ (block-yc b) 1)
+                                                                                (block-xc b) (block-yc b)
+                                                                                (- (block-xc b) 1) (block-yc b)
+                                                                                (- (block-xc b) 1) (- (block-yc b) 1))])]
+    [(eq? (block-type b) 'Z) (cond
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                                                                                 (- (block-xc b) 1) (block-yc b)
+                                                                                 (block-xc b) (block-yc b)
+                                                                                 (block-xc b) (+ (block-yc b) 1)
+                                                                                 (+ (block-xc b) 1) (+ (block-yc b) 1))]
+                               [(eq? (block-orient b) 'east) (make-canvas-block (block-type b)
+                                                                                (block-xc b) (+ (block-yc b) 1)
+                                                                                (block-xc b) (block-yc b)
+                                                                                (+ (block-xc b) 1) (block-yc b)
+                                                                                (+ (block-xc b) 1) (- (block-yc b) 1))]
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                                                                                 (- (block-xc b) 1) (- (block-yc b) 1)
+                                                                                 (block-xc b) (block-yc b)
+                                                                                 (block-xc b) (- (block-yc b) 1)
+                                                                                 (+ (block-xc b) 1) (block-yc b))]
+                               [(eq? (block-orient b) 'west) (make-canvas-block (block-type b)
+                                                                                (- (block-xc b) 1) (+ (block-yc b) 1)
+                                                                                (block-xc b) (block-yc b)
+                                                                                (- (block-xc b) 1) (block-yc b)
+                                                                                (block-xc b) (- (block-yc b) 1))])]))
