@@ -249,14 +249,14 @@
 ;; move o bloco 1 posição de acordo com direção
 (define (block-move dir block)
   (local 
-    [(define left (make-block (block-type b) (- (block-xc b) 1) (block-yc b) (block-orient b)))                               
-     (define right (make-block (block-type b) (add1(block-xc b))  (block-yc b) (block-orient b)))                               
-     (define down (make-block (block-type b) (block-xc b) (+ (block-yc b) 1) (block-orient b)))]
+    [(define left (make-block (block-type block) (- (block-xc block) 1) (block-yc block) (block-orient block)))                               
+     (define right (make-block (block-type block) (add1(block-xc block))  (block-yc block) (block-orient block)))                               
+     (define down (make-block (block-type block) (block-xc block) (+ (block-yc block) 1) (block-orient block)))]
                              
   (cond
-    [(symbol=? 'left s ) left]
-    [(symbol=? 'right s ) right]
-    [(symbol=? 'down s ) down])))
+    [(symbol=? 'left dir ) left]
+    [(symbol=? 'right dir ) right]
+    [(symbol=? 'down dir ) down])))
 
 
 
