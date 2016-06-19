@@ -46,6 +46,33 @@
 (define ex-J-block (make-block 'J 6 6 'north))
 (define ex-L-block (make-block 'L 6 6 'north))
 
+;;line-generator: inteiro -> lista (linha da tela)
+;;gera uma linha da tela inicial, dependente de "colunas"
+(define (line-generator col)
+  (cond
+    [(= col 0) empty]
+    [else (cons (make-square "void" "White") (line-generator (- col 1)))]))
+
+;;screen-generator: inteiro inteiro -> tela
+;;gera uma tela de jogo inicial condizente com "linhas" e "colunas"
+(define (screen-generator lin col)
+  (cond
+    [(= lin 0) empty]
+    [else (cons (line-generator col) (screen-generator (- lin 1) col))]))
+
+;;get-nesimo: list inteiro -> elemento-da-lista
+;;retorna o n-esimo elemento da lista
+(define get-nesimo                     
+   (lambda (n list)                   
+      (cond ((null? list) '())             
+            ((= n 0) (car list))              
+            (else (get-nesimo (- n 1) (cdr list))))))
+
+;;get-screen-xy: tela inteiro inteiro -> square
+;;retorna o square da tela na posição (x,y)
+(define (get-screen-xy tela x y)
+  (get-nesimo x (get-nesimo y tela)))
+
 ;;full-line?: lista-de-squares -> bool
 ;;retorna se a lista está completamente preenchida
 (define (full-line? l)
@@ -259,14 +286,68 @@
     [(symbol=? 'down dir ) down])))
 
 
+;; block-bottom? : block -> bool
+;; Verifica se o bloco chegou no chão
+;; Uso: (block-bottom? (make-block 'I 5 0 'south)) retorna #t
+(define (block-bottom? b)
+  (<= (block-yc b) 0))
 
+;; block-right? : block -> bool
+;; Verifica se o bloco chegou na parede direita
+(define (block-right? b)
+  (>= (block-xc b) (- colunas 1)))
+
+;; block-left? : block -> bool
+;; Verifica se o bloco chegou na parede esquerda
+(define (block-left? b)
+  (<= (block-xc b) 0))
+
+;;block-down? : block -> bool
+(define (block-down? b t)
+  (not (equal? "void" (square-type (get-screen-xy t (block-xc b) (block-yc b))))))
+
+;; convert-canvas-block : canvas-block -> list block
+;; Transforma um canvas-block em uma lista de block para ser mapeada
+(define (convert-canvas-block cb)
+  (list(make-block (canvas-block-type cb) (canvas-block-x1 cb) (canvas-block-y1 cb) 'north)
+        (make-block (canvas-block-type cb) (canvas-block-x2 cb) (canvas-block-y2 cb) 'north)
+        (make-block (canvas-block-type cb) (canvas-block-x3 cb) (canvas-block-y3 cb) 'north)
+        (make-block (canvas-block-type cb) (canvas-block-x4 cb) (canvas-block-y4 cb) 'north)))
+
+;; canvas-block-right : canvas-block -> bool 
+;; Verifica se a peça chegou na parede direita
+(define (canvas-block-right? cb)
+  (ormap block-right? (convert-canvas-block cb)))
+
+;; canvas-block-left : canvas-block -> bool 
+;; Verifica se a peça chegou na parede esquerda
+(define (canvas-block-left? cb)
+  (ormap block-left? (convert-canvas-block cb)))
+
+;;canvas-block-down : canvas-block -> bool
+;; Verifica se a peça bateu em algum bloco fixo
+(define (canvas-block-down? cb t)
+  (ormap block-down? (convert-canvas-block cb) t))
+
+
+
+
+;;Testando se peça bate na parede
 (desenha-tetris (convert-block ex-T-block))
+(canvas-block-right? (convert-block ex-T-block))
+(+ (block-xc ex-T-block) 1)
 (sleep 2)
 (clear-all)
 (desenha-tetris (convert-block (block-move 'right ex-T-block)))
+(canvas-block-right? (convert-block (block-move 'right ex-T-block)))
+(+ (block-xc ex-T-block) 2)
 (sleep 2)
 (clear-all)
-(desenha-tetris (convert-block (block-move 'left (block-move 'right ex-T-block))))
+(desenha-tetris (convert-block (block-move 'right (block-move 'right ex-T-block))))
+(canvas-block-right? (convert-block (block-move 'right (block-move 'right ex-T-block))))
+(+ (block-xc ex-T-block) 3)
 (sleep 2)
 (clear-all)
-(desenha-tetris (convert-block (block-move 'down (block-move 'left (block-move 'right ex-T-block)))))
+(desenha-tetris (convert-block (block-move 'left (block-move 'right (block-move 'right ex-T-block)))))
+(canvas-block-right? (convert-block (block-move 'right (block-move 'left (block-move 'right ex-T-block)))))
+(+ (block-xc ex-T-block) 2)
