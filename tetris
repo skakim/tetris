@@ -437,15 +437,15 @@
 
 ;;teste-fim: tela bloco -> boolean
 ;;se o novo bloco gerado não puder spawnar, o jogo acaba
-(define (teste-fim t b)
+(define (teste-spawn t b)
   (local
     [(define cb (convert-block b))
      (define nb (convert-canvas-block cb))]
-  (not (and
-        (can-spawn t (first nb))
-        (can-spawn t (first nb))
-        (can-spawn t (first nb))
-        (can-spawn t (first nb))))))
+  (and
+   (can-spawn t (first nb))
+   (can-spawn t (first nb))
+   (can-spawn t (first nb))
+   (can-spawn t (first nb)))))
 
 ;;avanca-estado: estado-de-jogo -> estado-de-jogo
 ;;atualiza o estado do jogo a cada tick
@@ -487,6 +487,31 @@
                       [else (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
                                                  (estado-de-jogo-tela estado)
                                                  (+ (estado-de-jogo-ticks estado) 1))])]
+    [(char? tecla) (cond
+                     [(or (char=? #\A tecla) (char=? #\a tecla))
+                      (cond
+                        [(teste-spawn (estado-de-jogo-tela estado) (rotate-block (estado-de-jogo-bloco-jogador estado) 'left))
+                         (make-estado-de-jogo (rotate-block (estado-de-jogo-bloco-jogador estado) 'left)
+                                             (estado-de-jogo-tela estado)
+                                             (+ (estado-de-jogo-ticks estado) 1))]
+                        [else
+                         (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
+                                              (estado-de-jogo-tela estado)
+                                              (+ estado-de-jogo-ticks estado 1))])]
+                     [(or (char=? #\D tecla) (char=? #\d tecla))
+                      (cond
+                        [(teste-spawn (estado-de-jogo-tela estado) (rotate-block (estado-de-jogo-bloco-jogador estado) 'right))
+                         (make-estado-de-jogo (rotate-block (estado-de-jogo-bloco-jogador estado) 'right)
+                                             (estado-de-jogo-tela estado)
+                                             (+ (estado-de-jogo-ticks estado) 1))]
+                        [else
+                         (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
+                                              (estado-de-jogo-tela estado)
+                                              (+ estado-de-jogo-ticks estado 1))])]
+                     [else (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
+                                                (estado-de-jogo-tela estado)
+                                                (+ (estado-de-jogo-ticks estado) 1))])]
+                         
     [else (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
                                (estado-de-jogo-tela estado)
                                (+ (estado-de-jogo-ticks estado) 1))])))
@@ -495,7 +520,7 @@
 ;;testa se o jogo acabou ou se deve continuar
 (define (testa-estado estado)
   (cond
-    [(teste-fim (estado-de-jogo-tela estado) (generate-new-block 3 6 2)) (local
+    [(not (teste-spawn (estado-de-jogo-tela estado) (generate-new-block 3 6 2))) (local
                                                                            [(define clear (clear-all))
                                                                             (define loser(draw-solid-string (make-posn (/ largura 2) (/ altura 2)) "GAME OVER" ))]
                                                                            (end-of-time))]
