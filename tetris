@@ -26,16 +26,13 @@
 
 ;;exemplo de tela fictícia
 (define ex-tela (list
-                 (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White"))
-                 (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White"))
-                 (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White"))
-                 (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White"))
-                 (list (make-square "void" "White")(make-square "solid" "Blue")(make-square "void" "White"))
-                 (list (make-square "void" "White")(make-square "solid" "Green")(make-square "solid" "Green"))
-                 (list (make-square "solid" "Green")(make-square "solid" "Green")(make-square "solid" "Red"))))
-
-(define full-line (list (make-square "solid" "Red")(make-square "solid" "Red")(make-square "solid" "Red")))
-(define void-line (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White")))
+                 (list (make-square "void" 'white)(make-square "void" 'white)(make-square "void" 'white))
+                 (list (make-square "void" 'white)(make-square "void" 'white)(make-square "void" 'white))
+                 (list (make-square "void" 'white)(make-square "void" 'white)(make-square "void" 'white))
+                 (list (make-square "void" 'white)(make-square "void" 'white)(make-square "void" 'white))
+                 (list (make-square "void" 'white)(make-square "solid" 'blue)(make-square "void" 'white))
+                 (list (make-square "void" 'white)(make-square "solid" 'green)(make-square "solid" 'green))
+                 (list (make-square "solid" 'green)(make-square "solid" 'green)(make-square "solid" 'red))))
 
 ;;exemplos de blocos: tipo, coordenada do centróide, orientação
 (define ex-I-block (make-block 'I 6 6 'north))
@@ -46,19 +43,22 @@
 (define ex-J-block (make-block 'J 6 6 'north))
 (define ex-L-block (make-block 'L 6 6 'north))
 
-;;line-generator: inteiro -> lista (linha da tela)
-;;gera uma linha da tela inicial, dependente de "colunas"
-(define (line-generator col)
+;;line-generator: inteiro string symbol -> lista (linha da tela)
+;;gera uma linha da tela inicial, dependente de "colunas", do tipo e da cor desejada
+(define (line-generator col type color)
   (cond
     [(= col 0) empty]
-    [else (cons (make-square "void" "White") (line-generator (- col 1)))]))
+    [else (cons (make-square type color) (line-generator (- col 1) type color))]))
+
+(define full-line (line-generator colunas "solid" 'red))
+(define void-line (line-generator colunas "void" 'white))
 
 ;;screen-generator: inteiro inteiro -> tela
 ;;gera uma tela de jogo inicial condizente com "linhas" e "colunas"
 (define (screen-generator lin col)
   (cond
     [(= lin 0) empty]
-    [else (cons (line-generator col) (screen-generator (- lin 1) col))]))
+    [else (cons (line-generator col "void" 'white) (screen-generator (- lin 1) col))]))
 
 ;;get-nesimo: list inteiro -> elemento-da-lista
 ;;retorna o n-esimo elemento da lista
@@ -77,9 +77,14 @@
 ;;retorna se a lista está completamente preenchida
 (define (full-line? l)
   (cond
-    [(empty? l) true]
-    [(not(string=? (square-type (first l)) "solid")) false]
-    [else (full-line (rest l))]))
+    [(empty? l) #t]
+    [(not(string=? (square-type (first l)) "solid")) #f]
+    [else (full-line? (rest l))]))
+
+;;not-full-line?: lista-de-squares -> bool
+;;retorna se a lista não está completamente preenchida
+(define (not-full-line? l)
+  (not (full-line? l)))
 
 ;;count-full-lines: tela -> inteiro
 ;;retorna o numero de linhas preenchidas
@@ -92,7 +97,7 @@
 ;;delete-full-lines: tela -> tela
 ;;retorna a tela sem as linhas preenchidas
 (define (delete-full-lines t)
-  (remove* full-line t (lambda (l1 l2) (and (full-line? l1) (full-line? l2)))))
+  (filter not-full-line? t))
 
 ;;append-void-lines: tela inteiro -> tela
 ;;retorna a tela com um número de linhas vazias adicionado acima
@@ -264,13 +269,33 @@
                                                                                 (- (block-xc b) 1) (block-yc b)
                                                                                 (block-xc b) (- (block-yc b) 1))])]))
 
+;;get-block-color: canvas-blockOUblock -> String (cor)
+;;retorna a cor do bloco (I - DeepSkyBlue, O - Gold, T - Purple, S - Green, Z - Red, J - DarkOrange, L - Blue)
+(define (get-block-color b)
+  (local
+    [(define (type b)
+       (cond
+         [(block? b) (block-type b)]
+         [(canvas-block? b) (canvas-block-type b)]))
+     ]
+    (cond
+      [(eq? (type b) 'I) 'DeepSkyBlue]
+      [(eq? (type b) 'O) 'Gold]
+      [(eq? (type b) 'T) 'Purple]
+      [(eq? (type b) 'S) 'Green]
+      [(eq? (type b) 'Z) 'Red]
+      [(eq? (type b) 'J) 'DarkOrange]
+      [(eq? (type b) 'L) 'Blue])))
+      
+
+
 ;;desenha-bloco: tela canvas-block -> boolean (true sempre)
 ;;desenha o bloco do jogador na tela
 (define (desenha-tetris block)
-  (and (draw-solid-rect (make-posn (* (canvas-block-x1 block) (/ largura colunas)) (* (canvas-block-y1 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
-       (draw-solid-rect (make-posn (* (canvas-block-x2 block) (/ largura colunas)) (* (canvas-block-y2 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
-       (draw-solid-rect (make-posn (* (canvas-block-x3 block) (/ largura colunas)) (* (canvas-block-y3 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
-       (draw-solid-rect (make-posn (* (canvas-block-x4 block) (/ largura colunas)) (* (canvas-block-y4 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)))
+  (and (draw-solid-rect (make-posn (* (canvas-block-x1 block) (/ largura colunas)) (* (canvas-block-y1 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) (get-block-color block))
+       (draw-solid-rect (make-posn (* (canvas-block-x2 block) (/ largura colunas)) (* (canvas-block-y2 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) (get-block-color block))
+       (draw-solid-rect (make-posn (* (canvas-block-x3 block) (/ largura colunas)) (* (canvas-block-y3 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) (get-block-color block))
+       (draw-solid-rect (make-posn (* (canvas-block-x4 block) (/ largura colunas)) (* (canvas-block-y4 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) (get-block-color block))))
 
 ;; block-move : direção block -> block
 ;; move o bloco 1 posição de acordo com direção
@@ -329,25 +354,67 @@
 (define (canvas-block-down? cb t)
   (ormap block-down? (convert-canvas-block cb) t))
 
+;;set-nesimo: lista inteiro elemento -> tela
+;;Modifica o n-esimo elemento da lista para um novo elemento
+(define (set-nesimo l i v)
+  (cond ((null? l) '())
+        ((= i 0) (cons v (cdr l)))
+        (else (cons (car l)
+                    (set-nesimo (cdr l) (- i 1) v)))))
 
+;;set-screen-xy: tela inteiro inteiro square -> tela
+;;altera o square da tela na posição (x,y)
+(define (set-screen-xy tela x y square)
+  (set-nesimo tela y
+              (set-nesimo (get-nesimo y tela) x square)))
 
+;;push-block-on-canvas block tela -> tela
+;;Coloca o subbloco na tela
+(define (push-block-on-canvas b t)
+  (set-screen-xy t (block-xc b) (block-yc b) (make-square "solid" (get-block-color b))))
+
+;;push-canvas-block-on-canvas: canvas-block tela -> tela
+;;Coloca o bloco na tela (quando ele fica fixo por colisão embaixo)
+(define (push-canvas-block-on-canvas cb t)
+  (local
+    [(define b (convert-canvas-block cb))]
+  (push-block-on-canvas (fourth b)
+                        (push-block-on-canvas (third b)
+                                              (push-block-on-canvas (second b)
+                                                                    (push-block-on-canvas (first b) t))))))
+
+;;print-square: square inteiro inteiro -> bool
+;;Exibe o square na posição x y
+(define (print-square sq x y)
+  (draw-solid-rect (make-posn (* x (/ largura colunas)) (* y (/ altura linhas))) (/ largura colunas) (/ altura linhas) (square-color sq)))
+
+;;print-tela: tela inteiro inteiro -> bool
+;;Exibe a tela no canvas
+(define (print-tela t lin col)
+  (cond
+    [(= lin linhas) #t]
+    [(= col colunas) (print-tela t (+ lin 1) 0)]
+    [else (and (print-square (get-screen-xy t col lin) lin col)
+               (print-tela t lin (+ col 1)))]))
+
+(print-tela (push-canvas-block-on-canvas (convert-block ex-I-block) (screen-generator linhas colunas)) 0 0)
 
 ;;Testando se peça bate na parede
-(desenha-tetris (convert-block ex-T-block))
-(canvas-block-right? (convert-block ex-T-block))
-(+ (block-xc ex-T-block) 1)
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (block-move 'right ex-T-block)))
-(canvas-block-right? (convert-block (block-move 'right ex-T-block)))
-(+ (block-xc ex-T-block) 2)
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (block-move 'right (block-move 'right ex-T-block))))
-(canvas-block-right? (convert-block (block-move 'right (block-move 'right ex-T-block))))
-(+ (block-xc ex-T-block) 3)
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (block-move 'left (block-move 'right (block-move 'right ex-T-block)))))
-(canvas-block-right? (convert-block (block-move 'right (block-move 'left (block-move 'right ex-T-block)))))
-(+ (block-xc ex-T-block) 2)
+;(desenha-tetris (convert-block ex-T-block))
+;(canvas-block-right? (convert-block ex-T-block))
+;(+ (block-xc ex-T-block) 1)
+;(sleep 2)
+;(clear-all)
+;(desenha-tetris (convert-block (block-move 'right ex-T-block)))
+;(canvas-block-right? (convert-block (block-move 'right ex-T-block)))
+;(+ (block-xc ex-T-block) 2)
+;(sleep 2)
+;(clear-all)
+;(desenha-tetris (convert-block (block-move 'right (block-move 'right ex-T-block))))
+;(canvas-block-right? (convert-block (block-move 'right (block-move 'right ex-T-block))))
+;(+ (block-xc ex-T-block) 3)
+;(sleep 2)
+;(clear-all)
+;(desenha-tetris (convert-block (block-move 'left (block-move 'right (block-move 'right ex-T-block)))))
+;(canvas-block-right? (convert-block (block-move 'right (block-move 'left (block-move 'right ex-T-block)))))
+;(+ (block-xc ex-T-block) 2)
