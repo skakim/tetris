@@ -12,8 +12,6 @@
 (define colunas 10)
 (define linhas 22)
 
-(start largura altura)
-
 ;;square é cada quadrado da tela, definido pelo tipo ("void", "solid" ou "mobile") e cor (I - DeepSkyBlue, O - Gold, T - Purple, S - Green, Z - Red, J - DarkOrange, L - Blue, void - White)
 ;;a tela será uma lista de listas de squares
 (define-struct square (type color))
@@ -314,28 +312,32 @@
   (cond
     [(symbol=? 'left dir ) left]
     [(symbol=? 'right dir ) right]
-    [(symbol=? 'down dir ) down])))
+    [(symbol=? 'down dir ) down]
+    [else block])))
 
 
 ;; block-bottom? : block -> bool
 ;; Verifica se o bloco chegou no chão
 ;; Uso: (block-bottom? (make-block 'I 5 0 'south)) retorna #t
 (define (block-bottom? b)
-  (<= (block-yc b) 0))
+  (>= (block-yc b) (- linhas 1)))
 
 ;; block-right? : block -> bool
 ;; Verifica se o bloco chegou na parede direita
-(define (block-right? b)
-  (>= (block-xc b) (- colunas 1)))
+(define (block-right? b t)
+  (or (>= (block-xc b) (- colunas 1))
+      (not (equal? "void" (square-type (get-screen-xy t (+ (block-xc b) 1) (block-yc b)))))))
 
 ;; block-left? : block -> bool
 ;; Verifica se o bloco chegou na parede esquerda
-(define (block-left? b)
-  (<= (block-xc b) 0))
+(define (block-left? b t)
+  (or (<= (block-xc b) 0)
+      (not (equal? "void" (square-type (get-screen-xy t (- (block-xc b) 1) (block-yc b)))))))
 
 ;;block-down? : block -> bool
 (define (block-down? b t)
-  (not (equal? "void" (square-type (get-screen-xy t (block-xc b) (block-yc b))))))
+  (or (block-bottom? b)
+      (not (equal? "void" (square-type (get-screen-xy t (block-xc b) (+ (block-yc b) 1)))))))
 
 ;; convert-canvas-block : canvas-block -> list block
 ;; Transforma um canvas-block em uma lista de block para ser mapeada
@@ -347,18 +349,27 @@
 
 ;; canvas-block-right : canvas-block -> bool 
 ;; Verifica se a peça chegou na parede direita
-(define (canvas-block-right? cb)
-  (ormap block-right? (convert-canvas-block cb)))
+(define (canvas-block-right? cb t)
+  (or (block-right? (first (convert-canvas-block cb)) t)
+      (block-right? (second (convert-canvas-block cb)) t)
+      (block-right? (third (convert-canvas-block cb)) t)
+      (block-right? (fourth (convert-canvas-block cb)) t)))
 
 ;; canvas-block-left : canvas-block -> bool 
 ;; Verifica se a peça chegou na parede esquerda
-(define (canvas-block-left? cb)
-  (ormap block-left? (convert-canvas-block cb)))
+(define (canvas-block-left? cb t)
+  (or (block-left? (first (convert-canvas-block cb)) t)
+      (block-left? (second (convert-canvas-block cb)) t)
+      (block-left? (third (convert-canvas-block cb)) t)
+      (block-left? (fourth (convert-canvas-block cb)) t)))
 
 ;;canvas-block-down : canvas-block -> bool
 ;; Verifica se a peça bateu em algum bloco fixo
 (define (canvas-block-down? cb t)
-  (ormap block-down? (convert-canvas-block cb) t))
+  (or (block-down? (first (convert-canvas-block cb)) t)
+      (block-down? (second (convert-canvas-block cb)) t)
+      (block-down? (third (convert-canvas-block cb)) t)
+      (block-down? (fourth (convert-canvas-block cb)) t)))
 
 ;;set-nesimo: lista inteiro elemento -> tela
 ;;Modifica o n-esimo elemento da lista para um novo elemento
@@ -403,60 +414,106 @@
 (define (print-square sq x y)
   (draw-solid-rect (make-posn (* x (/ largura colunas)) (* y (/ altura linhas))) (/ largura colunas) (/ altura linhas) (square-color sq)))
 
+
 ;;print-tela: tela inteiro inteiro -> bool
 ;;Exibe a tela no canvas
 (define (print-tela t lin col)
   (cond
     [(= lin linhas) #t]
     [(= col colunas) (print-tela t (+ lin 1) 0)]
-    [else (and (print-square (get-screen-xy t col lin) lin col)
+    [else (and (print-square (get-screen-xy t col lin) col lin)
                (print-tela t lin (+ col 1)))]))
 
-;;(print-tela (push-canvas-block-on-canvas (convert-block ex-I-block) (screen-generator linhas colunas)) 0 0)
+;;o estado do jogo é definido pelo bloco do jogador, o estado da tela, a contagem de ticks (a cada 60 o bloco eh forcado para baixo) e o score do jogador
+(define-struct estado-de-jogo (bloco-jogador tela ticks))
 
-;;Testando se peça bate na parede
-;(desenha-tetris (convert-block ex-T-block))
-;(canvas-block-right? (convert-block ex-T-block))
-;(+ (block-xc ex-T-block) 1)
-;(sleep 2)
-;(clear-all)
-;(desenha-tetris (convert-block (block-move 'right ex-T-block)))
-;(canvas-block-right? (convert-block (block-move 'right ex-T-block)))
-;(+ (block-xc ex-T-block) 2)
-;(sleep 2)
-;(clear-all)
-;(desenha-tetris (convert-block (block-move 'right (block-move 'right ex-T-block))))
-;(canvas-block-right? (convert-block (block-move 'right (block-move 'right ex-T-block))))
-;(+ (block-xc ex-T-block) 3)
-;(sleep 2)
-;(clear-all)
-;(desenha-tetris (convert-block (block-move 'left (block-move 'right (block-move 'right ex-T-block)))))
-;(canvas-block-right? (convert-block (block-move 'right (block-move 'left (block-move 'right ex-T-block)))))
-;(+ (block-xc ex-T-block) 2)
+;;estado de jogo inicial
+(define estado-inicial (make-estado-de-jogo (generate-new-block 3 6 2) (screen-generator linhas colunas) 0))
 
-;;teste de geração aleatoria de blocos
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
-(sleep 2)
-(clear-all)
-(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+;;can-spawn: tela bloco -> boolean
+;;um sub-bloco pode spawnar se a posição na tela for vazia
+(define (can-spawn t b)
+  (equal? "void" (square-type (get-screen-xy t (block-xc b) (block-yc b)))))
+
+;;teste-fim: tela bloco -> boolean
+;;se o novo bloco gerado não puder spawnar, o jogo acaba
+(define (teste-fim t b)
+  (local
+    [(define cb (convert-block b))
+     (define nb (convert-canvas-block cb))]
+  (not (and
+        (can-spawn t (first nb))
+        (can-spawn t (first nb))
+        (can-spawn t (first nb))
+        (can-spawn t (first nb))))))
+
+;;avanca-estado: estado-de-jogo -> estado-de-jogo
+;;atualiza o estado do jogo a cada tick
+(define (avanca-estado estado)
+  (local
+    [(define tecla (get-key-event))]
+  (cond
+    [(= (estado-de-jogo-ticks estado) 30) (cond
+                                            [(canvas-block-down? (convert-block (estado-de-jogo-bloco-jogador estado)) (estado-de-jogo-tela estado))
+                                             (make-estado-de-jogo (generate-new-block 3 6 2)
+                                                                  (append-void-lines (delete-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
+                                                                                               (estado-de-jogo-tela estado)))
+                                                                                     (count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
+                                                                                               (estado-de-jogo-tela estado)))) 
+                                                                  0)]
+                                            [else (make-estado-de-jogo (block-move 'down (estado-de-jogo-bloco-jogador estado))
+                                                  (estado-de-jogo-tela estado)
+                                                  0)])]
+    [(symbol? tecla) (cond
+                       [(and (symbol=? tecla 'down) (canvas-block-down? (convert-block (estado-de-jogo-bloco-jogador estado)) (estado-de-jogo-tela estado)))
+                        (make-estado-de-jogo (generate-new-block 3 6 2)
+                                             (append-void-lines (delete-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
+                                                                                                                (estado-de-jogo-tela estado)))
+                                                                (count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
+                                                                                                               (estado-de-jogo-tela estado))))
+                                             0)]
+                      [(and (symbol=? tecla 'down) (not(canvas-block-down? (convert-block (estado-de-jogo-bloco-jogador estado)) (estado-de-jogo-tela estado))))
+                       (make-estado-de-jogo (block-move tecla (estado-de-jogo-bloco-jogador estado))
+                                            (estado-de-jogo-tela estado)
+                                            (+ (estado-de-jogo-ticks estado) 1))]
+                      [(and (symbol=? tecla 'left) (not(canvas-block-left? (convert-block (estado-de-jogo-bloco-jogador estado))(estado-de-jogo-tela estado))))
+                       (make-estado-de-jogo (block-move tecla (estado-de-jogo-bloco-jogador estado))
+                                            (estado-de-jogo-tela estado)
+                                            (+ (estado-de-jogo-ticks estado) 1))]
+                      [(and (symbol=? tecla 'right) (not(canvas-block-right? (convert-block (estado-de-jogo-bloco-jogador estado)) (estado-de-jogo-tela estado))))
+                       (make-estado-de-jogo (block-move tecla (estado-de-jogo-bloco-jogador estado))
+                                            (estado-de-jogo-tela estado)
+                                            (+ (estado-de-jogo-ticks estado) 1))]
+                      [else (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
+                                                 (estado-de-jogo-tela estado)
+                                                 (+ (estado-de-jogo-ticks estado) 1))])]
+    [else (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
+                               (estado-de-jogo-tela estado)
+                               (+ (estado-de-jogo-ticks estado) 1))])))
+
+;;testa-estado: estado-de-jogo -> estado-de-jogo
+;;testa se o jogo acabou ou se deve continuar
+(define (testa-estado estado)
+  (cond
+    [(teste-fim (estado-de-jogo-tela estado) (generate-new-block 3 6 2)) (local
+                                                                           [(define clear (clear-all))
+                                                                            (define loser(draw-solid-string (make-posn (/ largura 2) (/ altura 2)) "GAME OVER" ))]
+                                                                           (end-of-time))]
+    [else (local
+            [(define clean (clear-all))
+             (define desenha-tela (print-tela (estado-de-jogo-tela estado) 0 0))
+             (define desenha-bloco (desenha-tetris (convert-block(estado-de-jogo-bloco-jogador estado))))]
+            (avanca-estado estado))]))
+
+
+;;(define clean (clear-all))
+;;    (define desenha-tela (print-tela (estado-de-jogo-tela estado) linhas colunas))
+;;    (define desenha-bloco (desenha-tetris (convert-block(estado-de-jogo-bloco-jogador estado))))
+
+(define tetris
+  (and
+   (start largura altura)
+   (big-bang (/ 1 60) estado-inicial)
+   (on-tick-event testa-estado )
+   ) 
+)
