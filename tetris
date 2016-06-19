@@ -412,7 +412,10 @@
 ;;print-square: square inteiro inteiro -> bool
 ;;Exibe o square na posição x y
 (define (print-square sq x y)
-  (draw-solid-rect (make-posn (* x (/ largura colunas)) (* y (/ altura linhas))) (/ largura colunas) (/ altura linhas) (square-color sq)))
+  (cond
+    [(not (eq? 'white (square-color sq)))
+     (draw-solid-rect (make-posn (* x (/ largura colunas)) (* y (/ altura linhas))) (/ largura colunas) (/ altura linhas) (square-color sq))]
+    [else true]))
 
 
 ;;print-tela: tela inteiro inteiro -> bool
@@ -442,10 +445,12 @@
     [(define cb (convert-block b))
      (define nb (convert-canvas-block cb))]
   (and
+   (not (canvas-block-right? cb t))
+   (not (canvas-block-left? cb t))
    (can-spawn t (first nb))
-   (can-spawn t (first nb))
-   (can-spawn t (first nb))
-   (can-spawn t (first nb)))))
+   (can-spawn t (second nb))
+   (can-spawn t (third nb))
+   (can-spawn t (fourth nb)))))
 
 ;;avanca-estado: estado-de-jogo -> estado-de-jogo
 ;;atualiza o estado do jogo a cada tick
@@ -457,9 +462,9 @@
                                             [(canvas-block-down? (convert-block (estado-de-jogo-bloco-jogador estado)) (estado-de-jogo-tela estado))
                                              (make-estado-de-jogo (generate-new-block 3 6 2)
                                                                   (append-void-lines (delete-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
-                                                                                               (estado-de-jogo-tela estado)))
+                                                                                                                                     (estado-de-jogo-tela estado)))
                                                                                      (count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
-                                                                                               (estado-de-jogo-tela estado)))) 
+                                                                                                                                    (estado-de-jogo-tela estado)))) 
                                                                   0
                                                                   (+ (* 100 (count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
                                                                                                                            (estado-de-jogo-tela estado))))
@@ -476,9 +481,9 @@
                                                                 (count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
                                                                                                                (estado-de-jogo-tela estado))))
                                              0
-                                             (+ (* 100(count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
-                                                                                                               (estado-de-jogo-tela estado))))
-                                                (estado-de-jogo-score estado)))]
+                                               (+ (* 100(count-full-lines (push-canvas-block-on-canvas (convert-block (estado-de-jogo-bloco-jogador estado))
+                                                                                                       (estado-de-jogo-tela estado))))
+                                                  (estado-de-jogo-score estado)))]
                       [(and (symbol=? tecla 'down) (not(canvas-block-down? (convert-block (estado-de-jogo-bloco-jogador estado)) (estado-de-jogo-tela estado))))
                        (make-estado-de-jogo (block-move tecla (estado-de-jogo-bloco-jogador estado))
                                             (estado-de-jogo-tela estado)
@@ -509,7 +514,7 @@
                         [else
                          (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
                                               (estado-de-jogo-tela estado)
-                                              (+ estado-de-jogo-ticks estado 1)
+                                              (+ (estado-de-jogo-ticks estado) 1)
                                               (estado-de-jogo-score estado))])]
                      [(or (char=? #\D tecla) (char=? #\d tecla))
                       (cond
@@ -521,7 +526,7 @@
                         [else
                          (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
                                               (estado-de-jogo-tela estado)
-                                              (+ estado-de-jogo-ticks estado 1)
+                                              (+ (estado-de-jogo-ticks estado) 1)
                                               (estado-de-jogo-score estado))])]
                      [else (make-estado-de-jogo (estado-de-jogo-bloco-jogador estado)
                                                 (estado-de-jogo-tela estado)
@@ -532,6 +537,7 @@
                                (estado-de-jogo-tela estado)
                                (+ (estado-de-jogo-ticks estado) 1)
                                (estado-de-jogo-score estado))])))
+
 
 ;;testa-estado: estado-de-jogo -> estado-de-jogo
 ;;testa se o jogo acabou ou se deve continuar
@@ -545,10 +551,13 @@
                                                                                                                                    (number->string (estado-de-jogo-score estado)))))]
                                                                            (end-of-time))]
     [else (local
-            [(define clean (clear-all))
+            [(define clear (clear-all))
              (define desenha-separador (draw-solid-line (make-posn largura 0) (make-posn largura altura) 'black))
+             (define desenha-TETRIS (draw-solid-string (make-posn (+ largura 20) (- (/ altura 2) 100)) "TETRIS"))
              (define desenha-score (draw-solid-string (make-posn (+ largura 20) (/ altura 2)) (string-append "Score: "
                                                                                                              (number->string (estado-de-jogo-score estado)))))
+             (define desenha-instrucao-mover (draw-solid-string (make-posn (+ largura 20) (+ (/ altura 2) 100)) "Mover: Setas"))
+             (define desenha-instrucao-girar (draw-solid-string (make-posn (+ largura 20) (+ (/ altura 2) 120)) "Girar: A   D"))
              (define desenha-tela (print-tela (estado-de-jogo-tela estado) 0 0))
              (define desenha-bloco (desenha-tetris (convert-block(estado-de-jogo-bloco-jogador estado))))]
             (avanca-estado estado))]))
