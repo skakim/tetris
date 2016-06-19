@@ -2,14 +2,17 @@
 
 ;;http://tetris.wikia.com/wiki/Tetris_Guideline
 (require htdp/draw)
+(require lang/posn)
 
 ;;https://github.com/racket/frtime/blob/master/demos/tetris.rkt << take a look
 
 ;;definição das dimensões da tela (largura e altura) -> 10 colunas x 22 linhas (as duas de cima hidden (para spawn de I)
 (define largura 250)
 (define altura 550)
+(define colunas 10)
+(define linhas 22)
 
-;;(start largura altura)
+(start largura altura)
 
 ;;square é cada quadrado da tela, definido pelo tipo ("void", "solid" ou "mobile") e cor (I - DeepSkyBlue, O - Gold, T - Purple, S - Green, Z - Red, J - DarkOrange, L - Blue, void - White)
 ;;a tela será uma lista de listas de squares
@@ -35,13 +38,13 @@
 (define void-line (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White")))
 
 ;;exemplos de blocos
-(define ex-I-block (make-block 'I 2 2 'north))
-(define ex-O-block (make-block 'O 2 2 'north))
-(define ex-T-block (make-block 'T 2 2 'north))
-(define ex-S-block (make-block 'S 2 2 'north))
-(define ex-Z-block (make-block 'Z 2 2 'north))
-(define ex-J-block (make-block 'J 2 2 'north))
-(define ex-L-block (make-block 'L 2 2 'north))
+(define ex-I-block (make-block 'I 6 6 'north))
+(define ex-O-block (make-block 'O 6 6 'north))
+(define ex-T-block (make-block 'T 6 6 'north))
+(define ex-S-block (make-block 'S 6 6 'north))
+(define ex-Z-block (make-block 'Z 6 6 'north))
+(define ex-J-block (make-block 'J 6 6 'north))
+(define ex-L-block (make-block 'L 6 6 'north))
 
 ;;full-line?: lista-de-squares -> bool
 ;;retorna se a lista está completamente preenchida
@@ -109,7 +112,7 @@
                                                 (- (block-xc b) 1) (- (block-yc b) 1)
                                                 (block-xc b) (- (block-yc b) 1))]
     [(eq? (block-type b) 'I) (cond
-                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 2) (block-yc b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
@@ -119,7 +122,7 @@
                                                                                 (block-xc b) (+ (block-yc b) 1)
                                                                                 (block-xc b) (block-yc b)
                                                                                 (block-xc b) (- (block-yc b) 1))]
-                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 2) (- (block-yc b) 1)
                                                                                  (- (block-xc b) 1) (- (block-yc b) 1)
                                                                                  (block-xc b) (- (block-yc b) 1)
@@ -130,7 +133,7 @@
                                                                                 (- (block-xc b) 1) (block-yc b)
                                                                                 (- (block-xc b) 1) (- (block-yc b) 1))])]
     [(eq? (block-type b) 'T) (cond
-                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (+ (block-yc b) 1)
@@ -140,7 +143,7 @@
                                                                                 (block-xc b) (block-yc b)
                                                                                 (+ (block-xc b) 1) (block-yc b)
                                                                                 (block-xc b) (- (block-yc b) 1))]
-                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (- (block-yc b) 1)
@@ -151,7 +154,7 @@
                                                                                 (- (block-xc b) 1) (block-yc b)
                                                                                 (block-xc b) (- (block-yc b) 1))])]
     [(eq? (block-type b) 'J) (cond
-                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (- (block-xc b) 1) (+ (block-yc b) 1)
@@ -161,7 +164,7 @@
                                                                                 (block-xc b) (block-yc b)
                                                                                 (+ (block-xc b) 1) (+ (block-yc b) 1)
                                                                                 (block-xc b) (- (block-yc b) 1))]
-                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (+ (block-xc b) 1) (- (block-yc b) 1)
@@ -172,7 +175,7 @@
                                                                                 (- (block-xc b) 1) (- (block-yc b) 1)
                                                                                 (block-xc b) (- (block-yc b) 1))])]
     [(eq? (block-type b) 'L) (cond
-                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (+ (block-xc b) 1) (+ (block-yc b) 1)
@@ -182,7 +185,7 @@
                                                                                 (block-xc b) (block-yc b)
                                                                                 (+ (block-xc b) 1) (- (block-yc b) 1)
                                                                                 (block-xc b) (- (block-yc b) 1))]
-                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (- (block-xc b) 1) (- (block-yc b) 1)
@@ -193,7 +196,7 @@
                                                                                 (- (block-xc b) 1) (+ (block-yc b) 1)
                                                                                 (block-xc b) (- (block-yc b) 1))])]
      [(eq? (block-type b) 'S) (cond
-                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (+ (block-yc b) 1)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (+ (block-yc b) 1)
@@ -203,7 +206,7 @@
                                                                                 (block-xc b) (block-yc b)
                                                                                 (+ (block-xc b) 1) (block-yc b)
                                                                                 (block-xc b) (- (block-yc b) 1))]
-                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (- (block-yc b) 1)
@@ -214,7 +217,7 @@
                                                                                 (- (block-xc b) 1) (block-yc b)
                                                                                 (- (block-xc b) 1) (- (block-yc b) 1))])]
     [(eq? (block-type b) 'Z) (cond
-                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (block-yc b)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (+ (block-yc b) 1)
@@ -224,7 +227,7 @@
                                                                                 (block-xc b) (block-yc b)
                                                                                 (+ (block-xc b) 1) (block-yc b)
                                                                                 (+ (block-xc b) 1) (- (block-yc b) 1))]
-                               [(eq? (block-orient b) 'south) (make-canvas-block (block-type b)
+                               [(eq? (block-orient b) 'north) (make-canvas-block (block-type b)
                                                                                  (- (block-xc b) 1) (- (block-yc b) 1)
                                                                                  (block-xc b) (block-yc b)
                                                                                  (block-xc b) (- (block-yc b) 1)
@@ -234,3 +237,23 @@
                                                                                 (block-xc b) (block-yc b)
                                                                                 (- (block-xc b) 1) (block-yc b)
                                                                                 (block-xc b) (- (block-yc b) 1))])]))
+
+;;desenha-bloco: tela canvas-block -> boolean (true sempre)
+;;desenha o bloco do jogador na tela
+(define (desenha-tetris block)
+  (and (draw-solid-rect (make-posn (* (canvas-block-x1 block) (/ largura colunas)) (* (canvas-block-y1 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
+       (draw-solid-rect (make-posn (* (canvas-block-x2 block) (/ largura colunas)) (* (canvas-block-y2 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'orange)
+       (draw-solid-rect (make-posn (* (canvas-block-x3 block) (/ largura colunas)) (* (canvas-block-y3 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'blue)
+       (draw-solid-rect (make-posn (* (canvas-block-x4 block) (/ largura colunas)) (* (canvas-block-y4 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'yellow)))
+
+
+(desenha-tetris (convert-block ex-L-block))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (rotate-block ex-L-block 'right)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (rotate-block (rotate-block ex-L-block 'right) 'right)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (rotate-block (rotate-block (rotate-block ex-L-block 'right) 'right) 'right)))
