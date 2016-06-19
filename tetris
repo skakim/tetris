@@ -43,6 +43,12 @@
 (define ex-J-block (make-block 'J 6 6 'north))
 (define ex-L-block (make-block 'L 6 6 'north))
 
+;;lista de tipos
+(define lista-tipos (list 'I 'O 'T 'S 'Z 'J 'L))
+
+;;lista de orientacoes
+(define lista-orient (list 'north 'south 'east 'west))
+
 ;;line-generator: inteiro string symbol -> lista (linha da tela)
 ;;gera uma linha da tela inicial, dependente de "colunas", do tipo e da cor desejada
 (define (line-generator col type color)
@@ -382,6 +388,15 @@
                         (push-block-on-canvas (third b)
                                               (push-block-on-canvas (second b)
                                                                     (push-block-on-canvas (first b) t))))))
+;;random-elem: lista-de-elementos -> elemento
+;;retorna um elemento aleatório de uma lista
+(define (random-elem l)
+  (list-ref l (random (length l))))
+
+;;generate-new-block: inteiro inteiro inteiro -> bloco
+;;gera um novo bloco de jogador
+(define (generate-new-block minx maxx y)
+  (make-block (random-elem lista-tipos) (random minx maxx) y (random-elem lista-orient)))
 
 ;;print-square: square inteiro inteiro -> bool
 ;;Exibe o square na posição x y
@@ -397,7 +412,7 @@
     [else (and (print-square (get-screen-xy t col lin) lin col)
                (print-tela t lin (+ col 1)))]))
 
-(print-tela (push-canvas-block-on-canvas (convert-block ex-I-block) (screen-generator linhas colunas)) 0 0)
+;;(print-tela (push-canvas-block-on-canvas (convert-block ex-I-block) (screen-generator linhas colunas)) 0 0)
 
 ;;Testando se peça bate na parede
 ;(desenha-tetris (convert-block ex-T-block))
@@ -418,3 +433,30 @@
 ;(desenha-tetris (convert-block (block-move 'left (block-move 'right (block-move 'right ex-T-block)))))
 ;(canvas-block-right? (convert-block (block-move 'right (block-move 'left (block-move 'right ex-T-block)))))
 ;(+ (block-xc ex-T-block) 2)
+
+;;teste de geração aleatoria de blocos
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
+(sleep 2)
+(clear-all)
+(desenha-tetris (convert-block (generate-new-block 3 6 0)))
