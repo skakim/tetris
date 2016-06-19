@@ -37,7 +37,7 @@
 (define full-line (list (make-square "solid" "Red")(make-square "solid" "Red")(make-square "solid" "Red")))
 (define void-line (list (make-square "void" "White")(make-square "void" "White")(make-square "void" "White")))
 
-;;exemplos de blocos
+;;exemplos de blocos: tipo, coordenada do centróide, orientação
 (define ex-I-block (make-block 'I 6 6 'north))
 (define ex-O-block (make-block 'O 6 6 'north))
 (define ex-T-block (make-block 'T 6 6 'north))
@@ -62,7 +62,6 @@
     [(full-line? (first t)) (+ 1 (count-full-lines (rest t)))]
     [else (count-full-lines (rest t))]))
 
-;;COM PROBLEMAS -> Racket está reclamando de não existir remove* (????)
 ;;delete-full-lines: tela -> tela
 ;;retorna a tela sem as linhas preenchidas
 (define (delete-full-lines t)
@@ -242,18 +241,32 @@
 ;;desenha o bloco do jogador na tela
 (define (desenha-tetris block)
   (and (draw-solid-rect (make-posn (* (canvas-block-x1 block) (/ largura colunas)) (* (canvas-block-y1 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
-       (draw-solid-rect (make-posn (* (canvas-block-x2 block) (/ largura colunas)) (* (canvas-block-y2 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'orange)
-       (draw-solid-rect (make-posn (* (canvas-block-x3 block) (/ largura colunas)) (* (canvas-block-y3 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'blue)
-       (draw-solid-rect (make-posn (* (canvas-block-x4 block) (/ largura colunas)) (* (canvas-block-y4 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'yellow)))
+       (draw-solid-rect (make-posn (* (canvas-block-x2 block) (/ largura colunas)) (* (canvas-block-y2 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
+       (draw-solid-rect (make-posn (* (canvas-block-x3 block) (/ largura colunas)) (* (canvas-block-y3 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)
+       (draw-solid-rect (make-posn (* (canvas-block-x4 block) (/ largura colunas)) (* (canvas-block-y4 block) (/ altura linhas))) (/ largura colunas) (/ altura linhas) 'red)))
+
+;; block-move : direção block -> block
+;; move o bloco 1 posição de acordo com direção
+(define (block-move dir block)
+  (local 
+    [(define left (make-block (block-type b) (- (block-xc b) 1) (block-yc b) (block-orient b)))                               
+     (define right (make-block (block-type b) (add1(block-xc b))  (block-yc b) (block-orient b)))                               
+     (define down (make-block (block-type b) (block-xc b) (+ (block-yc b) 1) (block-orient b)))]
+                             
+  (cond
+    [(symbol=? 'left s ) left]
+    [(symbol=? 'right s ) right]
+    [(symbol=? 'down s ) down])))
 
 
-(desenha-tetris (convert-block ex-L-block))
+
+(desenha-tetris (convert-block ex-T-block))
 (sleep 2)
 (clear-all)
-(desenha-tetris (convert-block (rotate-block ex-L-block 'right)))
+(desenha-tetris (convert-block (block-move 'right ex-T-block)))
 (sleep 2)
 (clear-all)
-(desenha-tetris (convert-block (rotate-block (rotate-block ex-L-block 'right) 'right)))
+(desenha-tetris (convert-block (block-move 'left (block-move 'right ex-T-block))))
 (sleep 2)
 (clear-all)
-(desenha-tetris (convert-block (rotate-block (rotate-block (rotate-block ex-L-block 'right) 'right) 'right)))
+(desenha-tetris (convert-block (block-move 'down (block-move 'left (block-move 'right ex-T-block)))))
