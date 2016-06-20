@@ -1,0 +1,52 @@
+• Linguagens funcionais:
+– Uso de listas imutáveis para a manipulação de estruturas, entidades e elementos
+em funções de ordem maior. As funções devem ser puras, ou seja, devem criar
+novas listas (e não manipular as que são recebidas)
+
+full-line (l57) e void-line (l58) utilizam a line-generator (l52~55), que cria do zero um exemplo de linha cheia e linha vazia.
+screen-generator (l62~65) gera a tela inicial do jogo usando line-generator. 
+Ela é utilizada na linha 434 na definição do estado inicial do jogo.
+
+
+– Especificação e uso de funções não nomeadas (ou lambda)
+
+get-nesimo (l69~73) é uma função lambda. 
+É utilizada em get-screen-xy (l78) e em set-screen-xy (l386).
+
+
+– Especificação e uso de funções que usem currying
+
+get-screen-xy (l77~78) utiliza currying por usar uma função lambda (lambda.x lambda.l x (lambda.y lambda.t y tela))). 
+É utilizada em print-tela (l427), can-spawn (l439), block-right? (l329), block-left? (l335) e block-down? (l340).
+
+
+– Especificação de funções que utilizem pattern matching na sua definição (polimorfismo)
+
+get-block-color (l278~292) utiliza polimorfismo (funciona para entradas do tipo block e canvas-block)
+É utilizada em desenha-tetris (l299~302) e push-block-on-canvas (l391).
+
+– Especificação e uso de funções de ordem superior (maior) criadas pelo programador
+
+atualiza-score (l457~458) é uma função de alta ordem (recebe o operador/função a ser aplicado)
+É utilizada em avanca-estado (l479~482 e l495~498).
+
+– Uso de funções de ordem maior (map, reduce, foldr/foldl ou similares)
+
+Na função delete-full-lines (l103~104) se usa a função de alta ordem filter, que recebe uma lista e uma função para filtrar a lista.
+É utilizada em avanca-estado (l474~475 e 490~491)
+
+– Especificação e uso de funções como elementos de 1a ordem
+
+A função score-mais-100-vezes-valor (l462~463) é utilizada como elemento de primeira ordem nas linhas 481 e 497.
+
+
+– Uso de recursão como mecanismo de iteração (pelo menos em funções de ordem superior que manipulem listas)
+
+line-generator (l52~55)
+screen-generator (l62~65)
+get-nesimo (l69~73)
+full-line? (l82~86)
+count-full-lines (l95~99)
+append-void-lines (l109~112)
+set-nesimo (l374~380)
+print-tela (l423~428)
